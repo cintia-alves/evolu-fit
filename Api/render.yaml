@@ -1,0 +1,15 @@
+# render.yaml - Configuração para Render.com
+
+services:
+  - type: web
+    name: api-treinos
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: DATA_DIR
+        value: /data

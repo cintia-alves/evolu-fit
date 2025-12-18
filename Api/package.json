@@ -1,0 +1,19 @@
+{
+  "name": "api-treinos",
+  "version": "1.0.0",
+  "description": "API simples de treinos para deploy em nuvem",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["api", "treinos", "fitness"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "better-sqlite3": "^11.5.0"
+  }
+}

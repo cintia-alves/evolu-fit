@@ -3,17 +3,17 @@
 -- =============================================
 
 -- Tabela de Usuários
-CREATE TABLE usuario (
+CREATE TABLE IF NOT EXISTS usuario (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT ,
     email TEXT UNIQUE,
     senha TEXT ,
-    avatar INTEGER DEFAULT 0,
+    avatar INTEGER DEFAULT 0
 );
 
 -- Tabela de Rotinas (uma rotina pertence a um usuário)
-CREATE TABLE rotina (
-    id INTEGER PRIMARY KEY AUTOINCREMEN-T,
+CREATE TABLE IF NOT EXISTS rotina (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT NOT NULL,
     usuario_id INTEGER NOT NULL,
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -22,19 +22,19 @@ CREATE TABLE rotina (
 );
 
 -- Tabela de Grupos Musculares
-CREATE TABLE grupo_muscular (
+CREATE TABLE IF NOT EXISTS grupo_muscular (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome TEXT NOT NULL UNIQUE
+    nome TEXT NOT NULL 
 );
 
 -- Tabela de Exercícios
-CREATE TABLE exercicio (
+CREATE TABLE IF NOT EXISTS exercicio (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT NOT NULL
 );
 
 -- Tabela associativa:  Exercício <-> Grupo Muscular (N:N)
-CREATE TABLE exercicio_grupo_muscular (
+CREATE TABLE IF NOT EXISTS exercicio_grupo_muscular (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     exercicio_id INTEGER NOT NULL,
     grupo_muscular_id INTEGER NOT NULL,
@@ -43,8 +43,9 @@ CREATE TABLE exercicio_grupo_muscular (
     UNIQUE(exercicio_id, grupo_muscular_id)
 );
 
+
 -- Tabela de Treinos (um treino pertence a uma rotina)
-CREATE TABLE treino (
+CREATE TABLE IF NOT EXISTS treino (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT NOT NULL,
     data DATE NOT NULL,
@@ -56,7 +57,7 @@ CREATE TABLE treino (
 );
 
 -- Tabela associativa: Treino <-> Exercício (N:N)
-CREATE TABLE treino_exercicio (
+CREATE TABLE IF NOT EXISTS treino_exercicio (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     treino_id INTEGER NOT NULL,
     exercicio_id INTEGER NOT NULL,
@@ -69,7 +70,7 @@ CREATE TABLE treino_exercicio (
 );
 
 -- Tabela associativa: Treino <-> Grupo Muscular (N:N)
-CREATE TABLE treino_grupo_muscular (
+CREATE TABLE IF NOT EXISTS treino_grupo_muscular (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     treino_id INTEGER NOT NULL,
     grupo_muscular_id INTEGER NOT NULL,
@@ -82,9 +83,9 @@ CREATE TABLE treino_grupo_muscular (
 -- ÍNDICES PARA MELHOR PERFORMANCE
 -- =============================================
 
-CREATE INDEX idx_rotina_usuario ON rotina(usuario_id);
-CREATE INDEX idx_treino_rotina ON treino(rotina_id);
-CREATE INDEX idx_treino_data ON treino(data);
-CREATE INDEX idx_treino_exercicio_treino ON treino_exercicio(treino_id);
-CREATE INDEX idx_treino_exercicio_exercicio ON treino_exercicio(exercicio_id);
-CREATE INDEX idx_usuario_email ON usuario(email);
+CREATE INDEX IF NOT EXISTS idx_rotina_usuario ON rotina(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_treino_rotina ON treino(rotina_id);
+CREATE INDEX IF NOT EXISTS idx_treino_data ON treino(data);
+CREATE INDEX IF NOT EXISTS idx_treino_exercicio_treino ON treino_exercicio(treino_id);
+CREATE INDEX IF NOT EXISTS idx_treino_exercicio_exercicio ON treino_exercicio(exercicio_id);
+CREATE INDEX IF NOT EXISTS idx_usuario_email ON usuario(email);
