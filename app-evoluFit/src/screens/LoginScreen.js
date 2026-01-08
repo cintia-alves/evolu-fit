@@ -6,7 +6,7 @@ import CustomInput from '../components/CustomInput';
 import { authService } from '../services/auth';
 import { useAppTheme } from '../context/ThemeContext'; // <--- MUDANÇA 1
 
-const LoginScreen = ({ onNavigateToRegister, onLoginSuccess }) => {
+const LoginScreen = ({ navigation }) => {
   const { theme } = useAppTheme(); // <--- MUDANÇA 2
   const [email, setEmail] = useState('user@email.com');
   const [password, setPassword] = useState('');
@@ -14,11 +14,11 @@ const LoginScreen = ({ onNavigateToRegister, onLoginSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
-    // ... (mesma lógica)
     setLoading(true);
     try {
       const response = await authService.login(email, password);
-      onLoginSuccess();
+      // Sucesso: Use replace para não deixar voltar para o login
+      navigation.replace('Dashboard'); 
     } catch (error) {
       Alert.alert('Erro', error.message);
     } finally {
@@ -76,7 +76,7 @@ const LoginScreen = ({ onNavigateToRegister, onLoginSuccess }) => {
         <Text style={{ color: theme.colors.secondaryText }}>Não tem uma conta? </Text>
         <Text 
             style={[styles.linkText, { color: theme.colors.primary }]} 
-            onPress={onNavigateToRegister}
+            onPress={() => navigation.navigate('Register')}
         >
           Cadastre-se
         </Text>

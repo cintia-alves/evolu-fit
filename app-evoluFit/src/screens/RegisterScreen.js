@@ -6,7 +6,7 @@ import CustomInput from '../components/CustomInput';
 import { authService } from '../services/auth';
 import { theme } from '../theme';
 
-const RegisterScreen = ({ onNavigateToLogin, onRegisterSuccess }) => {
+const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,9 +22,8 @@ const RegisterScreen = ({ onNavigateToLogin, onRegisterSuccess }) => {
     setLoading(true);
     try {
       await authService.register({ name, email, password });
-      onRegisterSuccess(); 
+      navigation.navigate('Success'); 
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível criar a conta.');
     } finally {
       setLoading(false);
     }
@@ -50,7 +49,7 @@ const RegisterScreen = ({ onNavigateToLogin, onRegisterSuccess }) => {
 
       <Button 
         mode="text" 
-        onPress={onNavigateToLogin} 
+        onPress={() => navigation.goBack()} 
         style={{ marginTop: 20 }}
         textColor={theme.colors.primary}
       >

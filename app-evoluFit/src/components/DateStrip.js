@@ -1,18 +1,22 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Text } from 'react-native-paper';
-import { useAppTheme } from '../context/ThemeContext'; // Importe o hook
+import { useAppTheme } from '../context/ThemeContext';
 
-const DateStrip = ({ data }) => {
-  const { theme } = useAppTheme(); // Use o tema
+// Adicione selectedMonth nas props
+const DateStrip = ({ data, selectedMonth }) => {
+  const { theme } = useAppTheme();
 
   return (
     <View style={styles.container}>
+      {/* Usa a prop selectedMonth ou um fallback se estiver carregando */}
       <Text variant="titleMedium" style={[styles.monthText, { color: theme.colors.secondaryText }]}>
-        Novembro, 2025
+        {selectedMonth || 'Carregando...'}
       </Text>
+      
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        {data.map((item, index) => (
+        {/* Adicionamos uma verificação (data || []) para evitar erro se data for null */}
+        {(data || []).map((item, index) => (
           <TouchableOpacity 
             key={index} 
             style={[

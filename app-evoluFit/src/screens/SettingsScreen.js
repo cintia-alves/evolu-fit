@@ -19,14 +19,21 @@ const SettingsItem = ({ label, icon, isSwitch, value, onToggle, onPress, theme }
   </TouchableOpacity>
 );
 
-const SettingsScreen = ({ onBack, onLogout }) => {
+const SettingsScreen = ({ navigation }) => {
   const { isDark, toggleTheme, theme } = useAppTheme();
+
+  const handleLogout = () => {
+      navigation.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+      });
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: '#103B66' }]}> 
       {/* Header Fixo Azul Escuro (Branding) */}
       <View style={styles.header}>
-        <IconButton icon="arrow-left" iconColor="#FFF" size={28} onPress={onBack} />
+        <IconButton icon="arrow-left" iconColor="#FFF" size={28} onPress={() => navigation.goBack()} />
         <View style={styles.profileContainer}>
           <Avatar.Icon size={100} icon="account" style={{ backgroundColor: '#00C2FF' }} />
           <Text variant="headlineMedium" style={styles.name}>Cíntia</Text>
@@ -44,7 +51,7 @@ const SettingsScreen = ({ onBack, onLogout }) => {
             label="Notificação" 
             isSwitch 
             value={true} 
-            onToggle={() => {}} 
+            onToggle={toggleTheme} 
             theme={theme} 
           />
           
@@ -60,7 +67,7 @@ const SettingsScreen = ({ onBack, onLogout }) => {
 
           <Button 
             mode="contained" 
-            onPress={onLogout}
+            onPress={handleLogout}
             style={styles.logoutButton}
             buttonColor="#103B66"
             textColor="#FFF"

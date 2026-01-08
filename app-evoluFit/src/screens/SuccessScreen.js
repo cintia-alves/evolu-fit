@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import { theme } from '../theme';
 
-const SuccessScreen = ({ onStart }) => {
+const SuccessScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -15,7 +15,10 @@ const SuccessScreen = ({ onStart }) => {
       <View style={styles.footer}>
         <Button
           mode="contained"
-          onPress={onStart}
+          onPress={() => navigation.reset({
+              index: 0,
+              routes: [{ name: 'Dashboard' }],
+          })}
           style={styles.button}
           labelStyle={styles.buttonLabel}
           contentStyle={{ height: 55 }}
