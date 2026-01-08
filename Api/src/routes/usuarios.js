@@ -6,6 +6,30 @@ async function handleUsuarios(req, res) {
     const method = req.method;
 
     try {
+        // POST /api/usuarios/login - Login simples (sem criptografia)
+        if (method === 'POST' && url === '/login') {
+            const { email, senha } = await parseBody(req);
+            
+            if (!email || !senha) {
+                return json(res, { erro: 'Email e senha são obrigatórios' }, 400);
+            }
+            
+            const usuario = db.prepare(`
+                SELECT id, nome, email, avatar 
+                FROM usuario 
+                WHERE email = ? AND senha = ? 
+            `).get(email, senha);
+            
+            if (!usuario) {
+                return json(res, { erro: 'Email ou senha incorretos' }, 401);
+            }
+            
+            return json(res, { 
+                mensagem: 'Login realizado com sucesso!',
+                usuario: usuario
+            });
+        }
+
         // GET /api/usuarios - Listar todos
         if (method === 'GET' && url === '/') {
             const usuarios = db.prepare(`
@@ -54,7 +78,7 @@ async function handleUsuarios(req, res) {
             const resultado = db.prepare(`
                 UPDATE usuario 
                 SET nome = ?, email = ?, avatar = ?, atualizado_em = CURRENT_TIMESTAMP
-                WHERE id = ?
+                WHERE id = ? 
             `).run(nome, email, avatar, id);
             
             if (resultado.changes === 0) {

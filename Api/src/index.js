@@ -1,5 +1,9 @@
 const http = require('http');
-const { inicializarBanco } = require('./database/db');
+const    // Rota inicial
+    if (url === '/' || url === '/api') {
+        return json(res, {
+            mensagem: '🏋️ API de Treinos funcionando!',
+            rotas: [icializarBanco } = require('./database/db');
 const { json } = require('./utils/http');
 
 // Importar handlers de rotas
@@ -41,23 +45,38 @@ const server = http.createServer(async (req, res) => {
             rotas: [
                 'GET/POST       /api/usuarios',
                 'GET/PUT/DELETE /api/usuarios/:id',
+                'POST           /api/usuarios/login',
                 'GET            /api/rotinas/usuario/:id',
+                'GET            /api/rotinas/ativa/:usuarioId',
                 'GET/PUT/DELETE /api/rotinas/:id',
+                'PUT            /api/rotinas/:id/ativar',
                 'POST           /api/rotinas',
-                'GET/DELETE     /api/treinos/:id',
+                'GET            /api/treinos/:id',
+                'GET            /api/treinos/hoje/:rotinaId',
+                'GET            /api/treinos/dia/:diaSemana/:rotinaId',
+                'DELETE         /api/treinos/:id',
                 'POST           /api/treinos',
                 'PUT            /api/treinos/:id/concluir',
                 'GET/POST       /api/exercicios',
                 'GET            /api/exercicios/grupos',
                 'GET            /api/exercicios/grupo/:id'
-            ]
-        });
-    }
+            ],
+        dias_semana: {
+            0: 'Domingo',
+            1: 'Segunda',
+            2: 'Terça',
+            3: 'Quarta',
+            4: 'Quinta',
+            5: 'Sexta',
+            6: 'Sábado'
+        }
+    });
+}
 
-    // Roteamento
-    if (url.startsWith('/api/usuarios')) {
-        return handleUsuarios(req, res);
-    }
+// Roteamento
+if (url.startsWith('/api/usuarios')) {
+    return handleUsuarios(req, res);
+}
 
     if (url.startsWith('/api/rotinas')) {
         return handleRotinas(req, res);
