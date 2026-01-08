@@ -119,7 +119,7 @@ async function handleTreinos(req, res) {
                 const treinoId = resultado.lastInsertRowid;
                 
                 if (exercicios && exercicios.length > 0) {
-                    const inserirExercicio = db. prepare(`
+                    const inserirExercicio = db.prepare(`
                         INSERT INTO treino_exercicio 
                         (treino_id, exercicio_id, series, repeticoes, carga, ordem) 
                         VALUES (?, ?, ?, ?, ?, ?)
@@ -153,7 +153,7 @@ async function handleTreinos(req, res) {
         if (method === 'PUT' && matchRoute('/:id/concluir', url)) {
             const { id } = getParams('/:id/concluir', url);
             
-            const resultado = db. prepare(`
+            const resultado = db.prepare(`
                 UPDATE treino 
                 SET concluido = 1, atualizado_em = CURRENT_TIMESTAMP
                 WHERE id = ? 
@@ -172,11 +172,11 @@ async function handleTreinos(req, res) {
             
             const resultado = db.prepare('DELETE FROM treino WHERE id = ?').run(id);
             
-            if (resultado. changes === 0) {
-                return json(res, { erro: 'Treino não encontrado' }, 404);
+            if (resultado.changes === 0) {
+                return json(res, { erro:'Treino não encontrado' }, 404);
             }
             
-            return json(res, { mensagem:  'Treino removido!' });
+            return json(res, { mensagem:'Treino removido!'});
         }
 
         return json(res, { erro: 'Rota não encontrada' }, 404);
