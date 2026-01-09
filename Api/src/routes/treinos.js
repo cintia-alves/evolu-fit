@@ -1,7 +1,6 @@
 const { db } = require('../database/db');
 const { json, parseBody, getParams, matchRoute } = require('../utils/http');
 
-// Helper para nome do dia da semana
 const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
 async function handleTreinos(req, res) {
@@ -9,47 +8,18 @@ async function handleTreinos(req, res) {
     const method = req.method;
 
     try {
-        // GET /api/treinos/hoje/:rotinaId - Buscar treino do dia atual
-        if (method === 'GET' && matchRoute('/hoje/:rotinaId', url)) {
-            const { rotinaId } = getParams('/hoje/:rotinaId', url);
-            const diaHoje = new Date().getDay(); // 0-6
-            
-            const treino = db.prepare(`
-                SELECT * FROM treino WHERE rotina_id = ? AND dia_semana = ?
-            `).get(rotinaId, diaHoje);
-            
-            if (!treino) {
-                return json(res, { 
-                    erro: 'Nenhum treino para hoje',
-                    dia_semana: diaHoje,
-                    dia_nome: DIAS_SEMANA[diaHoje]
-                }, 404);
-            }
-            
-            const exercicios = db.prepare(`
-                SELECT e.*, te.series, te.repeticoes, te.carga, te.ordem
-                FROM exercicio e
-                JOIN treino_exercicio te ON e.id = te.exercicio_id
-                WHERE te.treino_id = ?
-                ORDER BY te.ordem
-            `).all(treino.id);
-            
-            return json(res, { 
-                ...treino, 
-                dia_nome: DIAS_SEMANA[treino.dia_semana],
-                exercicios 
-            });
-        }
+        // --- ROTAS GET ---
 
-        // GET /api/treinos/dia/:diaSemana/:rotinaId - Buscar treino por dia específico
+        // GET /api/treinos/dia/:diaSemana/:rotinaId (Rota Principal da Dashboard)
         if (method === 'GET' && matchRoute('/dia/:diaSemana/:rotinaId', url)) {
             const { diaSemana, rotinaId } = getParams('/dia/:diaSemana/:rotinaId', url);
             const dia = parseInt(diaSemana);
             
-            if (dia < 0 || dia > 6) {
-                return json(res, { erro: 'Dia da semana deve ser de 0 (Domingo) a 6 (Sábado)' }, 400);
+            if (isNaN(dia) || dia < 0 || dia > 6) {
+                return json(res, { erro: 'Dia inválido' }, 400);
             }
             
+            // 1. Buscar Treino
             const treino = db.prepare(`
                 SELECT * FROM treino WHERE rotina_id = ? AND dia_semana = ?
             `).get(rotinaId, dia);
@@ -61,31 +31,80 @@ async function handleTreinos(req, res) {
                     dia_nome: DIAS_SEMANA[dia]
                 }, 404);
             }
+
+            // 2. Buscar Nome da Rotina
+            const rotina = db.prepare('SELECT nome FROM rotina WHERE id = ?').get(rotinaId);
             
-            const exercicios = db.prepare(`
-                SELECT e.*, te.series, te.repeticoes, te.carga, te.ordem
-                FROM exercicio e
-                JOIN treino_exercicio te ON e.id = te.exercicio_id
+            // 3. Grupos Musculares (Categorias)
+            const grupos = db.prepare(`
+                SELECT DISTINCT gm.nome
+                FROM grupo_muscular gm
+                JOIN exercicio_grupo_muscular egm ON gm.id = egm.grupo_muscular_id
+                JOIN treino_exercicio te ON egm.exercicio_id = te.exercicio_id
                 WHERE te.treino_id = ?
-                ORDER BY te.ordem
+                LIMIT 3
             `).all(treino.id);
-            
+
+            // 4. Contagem total de exercícios
+            const count = db.prepare('SELECT count(*) as total FROM treino_exercicio WHERE treino_id = ?').get(treino.id);
+
             return json(res, { 
                 ...treino, 
+                rotina_nome: rotina ? rotina.nome : 'Rotina Personalizada',
                 dia_nome: DIAS_SEMANA[treino.dia_semana],
-                exercicios 
+                grupos: grupos.map(g => g.nome), // Retorna array de strings: ['Peito', 'Ombro']
+                total_exercicios: count.total
             });
         }
 
-        // GET /api/treinos/:id - Buscar treino com exercícios
+        // POST /api/treinos
+        if (method === 'POST' && url === '/') {
+            const { nome, dia_semana, rotina_id } = await parseBody(req);
+            if (dia_semana === undefined || dia_semana < 0 || dia_semana > 6) return json(res, { erro: 'Dia inválido' }, 400);
+            const resultado = db.prepare('INSERT INTO treino (nome, dia_semana, rotina_id) VALUES (?, ?, ?)').run(nome, dia_semana, rotina_id);
+            return json(res, { id: resultado.lastInsertRowid, mensagem: 'Treino criado!' }, 201);
+        }
+
+        // PUT /api/treinos/:id/exercicios
+        if (method === 'PUT' && matchRoute('/:id/exercicios', url)) {
+            const { id } = getParams('/:id/exercicios', url);
+            const { exerciciosIds } = await parseBody(req);
+            const atualizar = db.transaction(() => {
+                db.prepare('DELETE FROM treino_exercicio WHERE treino_id = ?').run(id);
+                const insert = db.prepare('INSERT INTO treino_exercicio (treino_id, exercicio_id) VALUES (?, ?)');
+                exerciciosIds.forEach(exId => insert.run(id, exId));
+            });
+            atualizar();
+            return json(res, { mensagem: 'Atualizado!' });
+        }
+
+        if (method === 'PUT' && matchRoute('/:id/concluir', url)) {
+            const { id } = getParams('/:id/concluir', url);
+            const resultado = db.prepare(`
+                UPDATE treino SET concluido = 1, atualizado_em = CURRENT_TIMESTAMP WHERE id = ?
+            `).run(id);
+            if (resultado.changes === 0) return json(res, { erro: 'Treino não encontrado' }, 404);
+            return json(res, { mensagem: 'Treino concluído!' });
+        }
+
+        // PUT /api/treinos/:id (Edição genérica)
+        if (method === 'PUT' && matchRoute('/:id', url)) {
+            const { id } = getParams('/:id', url);
+            const { nome, dia_semana } = await parseBody(req);
+
+            const resultado = db.prepare(`
+                UPDATE treino SET nome = ?, dia_semana = ? WHERE id = ?
+            `).run(nome, dia_semana, id);
+
+            if (resultado.changes === 0) return json(res, { erro: 'Treino não encontrado' }, 404);
+            return json(res, { mensagem: 'Treino atualizado!' });
+        }
+
+        // GET /api/treinos/:id
         if (method === 'GET' && matchRoute('/:id', url)) {
             const { id } = getParams('/:id', url);
-            
             const treino = db.prepare('SELECT * FROM treino WHERE id = ?').get(id);
-            
-            if (!treino) {
-                return json(res, { erro: 'Treino não encontrado' }, 404);
-            }
+            if (!treino) return json(res, { erro: 'Treino não encontrado' }, 404);
             
             const exercicios = db.prepare(`
                 SELECT e.*, te.series, te.repeticoes, te.carga, te.ordem
@@ -95,88 +114,15 @@ async function handleTreinos(req, res) {
                 ORDER BY te.ordem
             `).all(id);
             
-            return json(res, { 
-                ...treino, 
-                dia_nome: DIAS_SEMANA[treino.dia_semana],
-                exercicios 
-            });
+            return json(res, { ...treino, exercicios });
         }
 
-        // POST /api/treinos - Criar treino com exercícios
-        if (method === 'POST' && url === '/') {
-            const { nome, dia_semana, rotina_id, exercicios } = await parseBody(req);
-            
-            // Validar dia da semana
-            if (dia_semana < 0 || dia_semana > 6) {
-                return json(res, { erro: 'Dia da semana deve ser de 0 (Domingo) a 6 (Sábado)' }, 400);
-            }
-            
-            const inserirTreino = db.transaction(() => {
-                const resultado = db.prepare(`
-                    INSERT INTO treino (nome, dia_semana, rotina_id) VALUES (?, ?, ?)
-                `).run(nome, dia_semana, rotina_id);
-                
-                const treinoId = resultado.lastInsertRowid;
-                
-                if (exercicios && exercicios.length > 0) {
-                    const inserirExercicio = db.prepare(`
-                        INSERT INTO treino_exercicio 
-                        (treino_id, exercicio_id, series, repeticoes, carga, ordem) 
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    `);
-                    
-                    exercicios.forEach((ex, index) => {
-                        inserirExercicio.run(
-                            treinoId,
-                            ex.exercicio_id,
-                            ex.series || 3,
-                            ex.repeticoes || 12,
-                            ex.carga || 0,
-                            ex.ordem || index
-                        );
-                    });
-                }
-                
-                return treinoId;
-            });
-            
-            const treinoId = inserirTreino();
-            
-            return json(res, { 
-                id: treinoId,
-                dia_nome: DIAS_SEMANA[dia_semana],
-                mensagem: 'Treino criado!' 
-            }, 201);
-        }
-
-        // PUT /api/treinos/: id/concluir - Marcar como concluído
-        if (method === 'PUT' && matchRoute('/:id/concluir', url)) {
-            const { id } = getParams('/:id/concluir', url);
-            
-            const resultado = db.prepare(`
-                UPDATE treino 
-                SET concluido = 1, atualizado_em = CURRENT_TIMESTAMP
-                WHERE id = ? 
-            `).run(id);
-            
-            if (resultado.changes === 0) {
-                return json(res, { erro: 'Treino não encontrado' }, 404);
-            }
-            
-            return json(res, { mensagem: 'Treino concluído!  💪' });
-        }
-
-        // DELETE /api/treinos/:id - Remover
+        // DELETE /api/treinos/:id
         if (method === 'DELETE' && matchRoute('/:id', url)) {
             const { id } = getParams('/:id', url);
-            
             const resultado = db.prepare('DELETE FROM treino WHERE id = ?').run(id);
-            
-            if (resultado.changes === 0) {
-                return json(res, { erro:'Treino não encontrado' }, 404);
-            }
-            
-            return json(res, { mensagem:'Treino removido!'});
+            if (resultado.changes === 0) return json(res, { erro: 'Treino não encontrado' }, 404);
+            return json(res, { mensagem: 'Treino removido!' });
         }
 
         return json(res, { erro: 'Rota não encontrada' }, 404);

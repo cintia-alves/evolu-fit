@@ -3,8 +3,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider, useAppTheme } from './src/context/ThemeContext';
+import { AuthProvider } from './src/context/AuthContext'; // <--- Importe aqui
 
-import AppNavigator from './src/routes/AppNavigator'; // Importa nossas rotas
+import AppNavigator from './src/routes/AppNavigator';
 import SplashScreen from './src/screens/SplashScreen';
 
 const AppContent = () => {
@@ -13,7 +14,6 @@ const AppContent = () => {
 
   useEffect(() => {
     async function prepare() {
-      // Simula carregamento inicial
       await new Promise(resolve => setTimeout(resolve, 2000));
       setIsAppReady(true);
     }
@@ -26,10 +26,11 @@ const AppContent = () => {
 
   return (
     <PaperProvider theme={theme}>
-      {/* O NavigationContainer deve envolver a aplicação */}
       <NavigationContainer theme={theme}> 
         <SafeAreaProvider style={{ backgroundColor: theme.colors.background }}>
-          <AppNavigator />
+          <AuthProvider> 
+             <AppNavigator />
+          </AuthProvider>
         </SafeAreaProvider>
       </NavigationContainer>
     </PaperProvider>

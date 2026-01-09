@@ -9,6 +9,8 @@ import { rotinaService } from '../services/rotinaService';
 import DateStrip from '../components/DateStrip';
 import QuickAccessCard from '../components/QuickAccessCard';
 import BottomMenu from '../components/BottomMenu';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../services/api';
 
 const DashboardScreen = ({ navigation }) => {
   const { theme } = useAppTheme();
@@ -16,20 +18,52 @@ const DashboardScreen = ({ navigation }) => {
   const [dashboardData, setDashboardData] = useState(null);
   const [rotinas, setRotinas] = useState([]);
 
-  console.log(rotinas[0])
+  const [rotinaAtiva, setRotinaAtiva] = useState(null); // Rotina ativa (para ID)
+  const [treinoHoje, setTreinoHoje] = useState(null);   // Dados do treino de hoje (com categorias)
+  const [temRotina, setTemRotina] = useState(false);
+
+  const { user } = useAuth();
+
+  console.log("TREINO DE HOJE", treinoHoje)
 
   // Função para carregar tudo
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      // 1. Dados do calendário/usuário
       const dashData = await dashboardService.getData();
-      setDashboardData(dashData);
+      const userName = user?.nome || user?.name || 'Visitante';
+      setDashboardData({ ...dashData, user: { name: userName } });
 
-      // 2. Buscar rotinas do usuário (ID 1 hardcoded por enquanto)
-      const userRotinas = await rotinaService.getByUser(1);
-      setRotinas(userRotinas || []);
-      
+      if (user?.id) {
+          const userRotinas = await rotinaService.getByUser(user.id);
+          
+          if (userRotinas && userRotinas.length > 0) {
+              setTemRotina(true);
+              const ativa = userRotinas.find(r => r.ativa === 1) || userRotinas[0];
+              setRotinaAtiva(ativa);
+
+              const diaSemanaHoje = new Date().getDay();
+              let treinoDoDia = null;
+
+              try {
+                  const response = await api.get(`/treinos/dia/${diaSemanaHoje}/${ativa.id}`);
+                  treinoDoDia = response;
+              } catch (error) {
+                  // Se for 404 ou mensagem de "nenhum treino", é descanso
+                  if (error.message?.includes('Nenhum treino') || error.message?.includes('404')) {
+                      treinoDoDia = null;
+                  } else {
+                      console.error("Erro ao carregar treino do dia:", error);
+                  }
+              }
+
+              setTreinoHoje(treinoDoDia)
+          } else {
+              setTemRotina(false);
+              setRotinaAtiva(null);
+              setTreinoHoje(null);
+          }
+      }
     } catch (error) {
       console.error("Erro ao carregar dashboard:", error);
     } finally {
@@ -41,7 +75,7 @@ const DashboardScreen = ({ navigation }) => {
   useFocusEffect(
     useCallback(() => {
       fetchAllData();
-    }, [])
+    }, [user])
   );
 
   if (loading) {
@@ -84,70 +118,101 @@ const DashboardScreen = ({ navigation }) => {
   );
 
   // --- COMPONENTE: Card quando TEM rotina (Novo Design) ---
-  const ActiveRoutineCard = ({ rotina }) => (
-    <View style={styles.activeCard}>
-      <View style={styles.activeCardHeader}>
-        <View style={styles.iconCircle}>
-           <Avatar.Icon size={40} icon="dumbbell" style={{ backgroundColor: 'transparent' }} color="#FFF" />
+  const ActiveRoutineCard = () => {
+      const isConcluido = treinoHoje.concluido === 1;
+
+      if (!treinoHoje) {
+          return (
+            <View style={styles.activeCard}>
+                <View style={styles.activeCardHeader}>
+                    <View style={styles.iconCircle}>
+                        <Avatar.Icon size={40} icon="dumbbell" style={{ backgroundColor: 'transparent' }} color="#FFF" />
+                    </View>
+                    <Text style={styles.headerText}>Sem treino hoje</Text>
+                </View>
+                <Text variant="headlineMedium" style={styles.routineTitle}>Descanso</Text>
+                <Text style={{ color: '#DDD', marginBottom: 20 }}>Aproveite para recuperar as energias!</Text>
+                <Button 
+                    mode="contained" 
+                    onPress={() => navigation.navigate('RotinaDetail', { rotinaData: rotinaAtiva })}
+                    style={styles.startBtn} buttonColor="#F5F6FA" textColor="#103B66"
+                >
+                    VER MINHA ROTINA
+                </Button>
+            </View>
+          );
+      }
+
+      return (
+        <View style={styles.activeCard}>
+          <View style={styles.activeCardHeader}>
+            <View style={styles.iconCircle}>
+               <Avatar.Icon size={40} icon="calendar-check" style={{ backgroundColor: 'transparent' }} color="#FFF" />
+            </View>
+            <Text style={styles.headerText}>Treino de hoje</Text>
+          </View>
+
+          {/* Nome do Treino (Ex: Treino A) */}
+          <Text variant="headlineMedium" style={styles.routineTitle}>
+            {treinoHoje.nome}
+          </Text>
+
+          {/* Badges de Categorias (Grupos Musculares) */}
+          <View style={styles.tagsRow}>
+            {treinoHoje.grupos && treinoHoje.grupos.map((grupo, index) => (
+                <Chip key={index} style={styles.chipLight} textStyle={styles.chipTextDark}>{grupo}</Chip>
+            ))}
+            {(!treinoHoje.grupos || treinoHoje.grupos.length === 0) && (
+                 <Chip style={styles.chipLight} textStyle={styles.chipTextDark}>Geral</Chip>
+            )}
+          </View>
+
+          {/* Badges Info (Qtd e Nome Rotina) */}
+          <View style={styles.tagsRow}>
+            <Chip style={styles.chipDark} textStyle={styles.chipTextLight}>
+                {treinoHoje.total_exercicios} exercícios
+            </Chip>
+            <Chip style={styles.chipDark} textStyle={styles.chipTextLight}>
+                 {treinoHoje.rotina_nome}
+            </Chip>
+          </View>
+
+          {isConcluido ? (
+              <Button 
+                mode="contained" 
+                style={[styles.startBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
+                textColor="#FFF"
+                contentStyle={{ height: 55 }}
+                disabled
+              >
+                TREINO FINALIZADO
+              </Button>
+          ) : (
+              <Button 
+                mode="contained" 
+                onPress={() => navigation.navigate('ExecucaoTreino', { 
+                    treinoId: treinoHoje.id,
+                    diaNome: treinoHoje.dia_nome 
+                })}
+                style={styles.startBtn}
+                buttonColor="#F5F6FA"
+                textColor="#103B66"
+                contentStyle={{ height: 55, flexDirection: 'row-reverse' }}
+                icon="arrow-right"
+              >
+                INICIAR TREINO
+              </Button>
+          )}
+
+          {/* <View style={styles.secondaryBtnRow}>
+            <Button icon="calendar" mode="contained" style={styles.secBtn} buttonColor="#2A405F" textColor="#FFF">Mudar data</Button>
+            <Button icon="close" mode="contained" style={styles.secBtn} buttonColor="#2A405F" textColor="#FFF">Não fui</Button>
+          </View> */}
         </View>
-        <Text style={styles.headerText}>Treino de hoje</Text>
-      </View>
+      );
+  };
 
-      {/* Nome da Rotina ou Aviso */}
-      <Text variant="headlineMedium" style={styles.routineTitle}>
-        {rotina?.nome || "Rotina sem nome"}
-      </Text>
-
-      {/* Tags de Grupos Musculares (Mockados pois a API de listagem não retorna isso ainda) */}
-      <View style={styles.tagsRow}>
-        <Chip style={styles.chipLight} textStyle={styles.chipTextDark}>Peito</Chip>
-        <Chip style={styles.chipLight} textStyle={styles.chipTextDark}>Posterior de Coxas</Chip>
-      </View>
-
-      {/* Tags de Info Extra */}
-      <View style={styles.tagsRow}>
-        <Chip style={styles.chipDark} textStyle={styles.chipTextLight}>2 exercícios</Chip>
-        <Chip style={styles.chipDark} textStyle={styles.chipTextLight}>
-             {rotina?.nome ? `Rotina ${rotina.nome.substring(0, 8)}...` : 'Rotina Personalizada'}
-        </Chip>
-      </View>
-
-      {/* Botão Principal */}
-      <Button 
-        mode="contained" 
-        onPress={() => console.log("Iniciar Treino")}
-        style={styles.startBtn}
-        buttonColor="#F5F6FA"
-        textColor="#103B66"
-        contentStyle={{ height: 55, flexDirection: 'row-reverse' }}
-        icon="arrow-right"
-      >
-        INICIAR TREINO
-      </Button>
-
-      {/* Botões Secundários */}
-      <View style={styles.secondaryBtnRow}>
-        <Button 
-            icon="calendar" 
-            mode="contained" 
-            style={styles.secBtn} 
-            buttonColor="#2A405F" 
-            textColor="#FFF"
-        >
-            Mudar data
-        </Button>
-        <Button 
-            icon="close" 
-            mode="contained" 
-            style={styles.secBtn} 
-            buttonColor="#2A405F" 
-            textColor="#FFF"
-        >
-            Não fui
-        </Button>
-      </View>
-    </View>
-  );
+  console.log(dashboardData)
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -172,12 +237,7 @@ const DashboardScreen = ({ navigation }) => {
         />
 
         {/* Lógica de Exibição do Card */}
-        {rotinas.length > 0 ? (
-            // Pega a primeira rotina encontrada
-            <ActiveRoutineCard rotina={rotinas[0]} />
-        ) : (
-            <EmptyStateCard />
-        )}
+        {temRotina ? <ActiveRoutineCard /> : <EmptyStateCard />}
 
         {/* Quick Access */}
         <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.secondaryText }]}>

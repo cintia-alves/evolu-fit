@@ -305,8 +305,8 @@ function criarUsuarioExemplo() {
 
         // 2. Criar rotina de treino ABC
         const rotinaABC = db.prepare(`
-            INSERT INTO rotina (nome, usuario_id) VALUES (?, ?)
-        `).run('Treino ABC - Hipertrofia', usuarioId);
+            INSERT INTO rotina (nome, usuario_id, ativa) VALUES (?, ?, ?)
+        `).run('Treino ABC - Hipertrofia', usuarioId, 1);
         
         const rotinaId = rotinaABC.lastInsertRowid;
 
@@ -321,8 +321,8 @@ function criarUsuarioExemplo() {
 
         // 4. Criar Treino A - Peito e Tríceps
         const treinoA = db.prepare(`
-            INSERT INTO treino (nome, data, rotina_id, concluido) VALUES (?, ?, ?, ?)
-        `).run('Treino A - Peito e Tríceps', '2025-12-16', rotinaId, 1);
+            INSERT INTO treino (nome, dia_semana, rotina_id, concluido) VALUES (?, ?, ?, ?)
+        `).run('Treino A - Peito e Tríceps', 1, rotinaId, 1);
         
         const treinoAId = treinoA.lastInsertRowid;
 
@@ -351,8 +351,8 @@ function criarUsuarioExemplo() {
 
         // 5. Criar Treino B - Costas e Bíceps
         const treinoB = db.prepare(`
-            INSERT INTO treino (nome, data, rotina_id, concluido) VALUES (?, ?, ?, ?)
-        `).run('Treino B - Costas e Bíceps', '2025-12-17', rotinaId, 0);
+            INSERT INTO treino (nome, dia_semana, rotina_id, concluido) VALUES (?, ?, ?, ?)
+        `).run('Treino B - Costas e Bíceps', 3, rotinaId, 0);
         
         const treinoBId = treinoB.lastInsertRowid;
 
@@ -375,8 +375,8 @@ function criarUsuarioExemplo() {
 
         // 6. Criar Treino C - Pernas e Ombros
         const treinoC = db.prepare(`
-            INSERT INTO treino (nome, data, rotina_id, concluido) VALUES (?, ?, ?, ?)
-        `).run('Treino C - Pernas e Ombros', '2025-12-18', rotinaId, 0);
+            INSERT INTO treino (nome, dia_semana, rotina_id, concluido) VALUES (?, ?, ?, ?)
+        `).run('Treino C - Pernas e Ombros', 5, rotinaId, 0);
         
         const treinoCId = treinoC.lastInsertRowid;
 

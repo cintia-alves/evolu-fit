@@ -3,24 +3,31 @@ import { View, StyleSheet, Alert } from 'react-native';
 import { Button, Text } from 'react-native-paper';
 import AuthLayout from '../components/AuthLayout';
 import CustomInput from '../components/CustomInput';
-import { authService } from '../services/auth';
-import { useAppTheme } from '../context/ThemeContext'; // <--- MUDANÇA 1
+import { useAppTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext'; // Importe o hook
 
 const LoginScreen = ({ navigation }) => {
-  const { theme } = useAppTheme(); // <--- MUDANÇA 2
-  const [email, setEmail] = useState('user@email.com');
+  const { theme } = useAppTheme();
+  const { signIn } = useAuth(); // Pegamos a função do contexto
+  
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Erro', 'Preencha todos os campos');
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await authService.login(email, password);
-      // Sucesso: Use replace para não deixar voltar para o login
+      // Chama a função do contexto que bate na API e salva o user
+      await signIn(email, password); 
       navigation.replace('Dashboard'); 
     } catch (error) {
-      Alert.alert('Erro', error.message);
+      Alert.alert('Erro no Login', error.message || 'Verifique suas credenciais');
     } finally {
       setLoading(false);
     }
@@ -45,13 +52,12 @@ const LoginScreen = ({ navigation }) => {
           <CustomInput.Icon 
             icon={showPassword ? "eye-off" : "eye"} 
             onPress={() => setShowPassword(!showPassword)}
-            color={theme.colors.secondaryText} // Ícone com cor do tema
+            color={theme.colors.secondaryText}
           />
         }
       />
 
       <View style={styles.forgotPasswordContainer}>
-        {/* Texto do link agora usa theme.colors.primary */}
         <Text 
             style={[styles.linkText, { color: theme.colors.primary }]} 
             onPress={() => console.log('Recuperar senha')}
@@ -65,7 +71,7 @@ const LoginScreen = ({ navigation }) => {
         onPress={handleLogin}
         loading={loading}
         disabled={loading}
-        style={[styles.button, { backgroundColor: theme.colors.primary }]} // Botão com cor do tema
+        style={[styles.button, { backgroundColor: theme.colors.primary }]}
         contentStyle={{ height: 50 }}
         labelStyle={{ color: theme.dark ? '#FFF' : '#FFF' }}
       >

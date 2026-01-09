@@ -1,8 +1,7 @@
-// src/screens/SettingsScreen.js
-import React from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Text, Avatar, Switch, IconButton, Button } from 'react-native-paper';
 import { useAppTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 const SettingsItem = ({ label, icon, isSwitch, value, onToggle, onPress, theme }) => (
   <TouchableOpacity 
@@ -21,12 +20,14 @@ const SettingsItem = ({ label, icon, isSwitch, value, onToggle, onPress, theme }
 
 const SettingsScreen = ({ navigation }) => {
   const { isDark, toggleTheme, theme } = useAppTheme();
+  const { user, signOut } = useAuth();
 
   const handleLogout = () => {
-      navigation.reset({
-          index: 0,
-          routes: [{ name: 'Login' }],
-      });
+    signOut();
+    navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+    });
   };
 
   return (
@@ -36,7 +37,9 @@ const SettingsScreen = ({ navigation }) => {
         <IconButton icon="arrow-left" iconColor="#FFF" size={28} onPress={() => navigation.goBack()} />
         <View style={styles.profileContainer}>
           <Avatar.Icon size={100} icon="account" style={{ backgroundColor: '#00C2FF' }} />
-          <Text variant="headlineMedium" style={styles.name}>Cíntia</Text>
+          <Text variant="headlineMedium" style={styles.name}>
+            {user?.nome || 'Usuário'}
+          </Text>
         </View>
       </View>
 

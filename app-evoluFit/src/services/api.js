@@ -34,5 +34,50 @@ export const api = {
       console.error('API Error:', error);
       throw error;
     }
+  },
+
+  put: async (endpoint, body) => {
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.erro || 'Erro na requisição PUT');
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('API Put Error:', error);
+      throw error;
+    }
+  },
+
+  delete: async (endpoint) => {
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.erro || 'Erro na requisição DELETE');
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('API Delete Error:', error);
+      throw error;
+    }
   }
 };

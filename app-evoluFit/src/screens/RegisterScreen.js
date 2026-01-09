@@ -3,10 +3,13 @@ import { View, StyleSheet, Alert } from 'react-native';
 import { Button } from 'react-native-paper';
 import AuthLayout from '../components/AuthLayout';
 import CustomInput from '../components/CustomInput';
-import { authService } from '../services/auth';
-import { theme } from '../theme';
+import { useAppTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext'; // Importe o hook
 
 const RegisterScreen = ({ navigation }) => {
+  const { theme } = useAppTheme();
+  const { signUp } = useAuth(); // Pegamos a função do contexto
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,6 +17,10 @@ const RegisterScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
+    if (!name || !email || !password) {
+        Alert.alert('Erro', 'Preencha todos os campos');
+        return;
+    }
     if (password !== confirmPassword) {
       Alert.alert('Erro', 'As senhas não coincidem.');
       return;
@@ -21,9 +28,16 @@ const RegisterScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      await authService.register({ name, email, password });
+      // Envia os dados para a API real
+      await signUp({ 
+        nome: name,
+        email: email, 
+        senha: password,
+        avatar: 0 
+      });
       navigation.navigate('Success'); 
     } catch (error) {
+      Alert.alert('Erro no Cadastro', error.message || 'Tente novamente mais tarde');
     } finally {
       setLoading(false);
     }
@@ -43,6 +57,8 @@ const RegisterScreen = ({ navigation }) => {
         disabled={loading}
         style={styles.button}
         contentStyle={{ height: 50 }}
+        buttonColor={theme.colors.primary}
+        textColor="#FFF"
       >
         Criar Conta
       </Button>
@@ -60,7 +76,7 @@ const RegisterScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  button: { borderRadius: 25, backgroundColor: theme.colors.primary, marginTop: 10 },
+  button: { borderRadius: 25, marginTop: 10 },
 });
 
 export default RegisterScreen;
