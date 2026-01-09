@@ -1,7 +1,10 @@
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { Text, Avatar, Switch, IconButton, Button } from 'react-native-paper';
+import React, { useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Modal, Alert } from 'react-native';
+import { Text, Avatar, Switch, IconButton, Button, TextInput } from 'react-native-paper';
 import { useAppTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import { authService } from '../services/auth';
+import CustomInput from '../components/CustomInput'; // Usando seu componente padrão
 
 const SettingsItem = ({ label, icon, isSwitch, value, onToggle, onPress, theme }) => (
   <TouchableOpacity 
@@ -20,41 +23,102 @@ const SettingsItem = ({ label, icon, isSwitch, value, onToggle, onPress, theme }
 
 const SettingsScreen = ({ navigation }) => {
   const { isDark, toggleTheme, theme } = useAppTheme();
-  const { user, signOut } = useAuth();
+  const { user, signOut, updateUser } = useAuth();
+
+  // Estados dos Modais
+  const [modalProfileVisible, setModalProfileVisible] = useState(false);
+  const [modalPasswordVisible, setModalPasswordVisible] = useState(false);
+
+  // Estados dos Formulários
+  const [nome, setNome] = useState(user?.nome || '');
+  const [email, setEmail] = useState(user?.email || '');
+  
+  const [novaSenha, setNovaSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleLogout = () => {
     signOut();
-    navigation.reset({
-        index: 0,
-        routes: [{ name: 'Login' }],
-    });
+    navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+  };
+
+  const handleSaveProfile = async () => {
+    if (!nome || !email) {
+        Alert.alert("Erro", "Preencha todos os campos.");
+        return;
+    }
+    setLoading(true);
+    try {
+        const response = await authService.updateProfile(user.id, { nome, email });
+        updateUser(response.usuario); // Atualiza contexto
+        setModalProfileVisible(false);
+        Alert.alert("Sucesso", "Perfil atualizado!");
+    } catch (error) {
+        Alert.alert("Erro", "Falha ao atualizar perfil.");
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const handleSavePassword = async () => {
+      if (!novaSenha || !confirmarSenha) {
+          Alert.alert("Erro", "Preencha os campos.");
+          return;
+      }
+      if (novaSenha !== confirmarSenha) {
+          Alert.alert("Erro", "As senhas não coincidem.");
+          return;
+      }
+      setLoading(true);
+      try {
+          await authService.updatePassword(user.id, novaSenha);
+          setModalPasswordVisible(false);
+          setNovaSenha('');
+          setConfirmarSenha('');
+          Alert.alert("Sucesso", "Senha alterada com sucesso!");
+      } catch (error) {
+          Alert.alert("Erro", "Falha ao alterar senha.");
+      } finally {
+          setLoading(false);
+      }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: '#103B66' }]}> 
-      {/* Header Fixo Azul Escuro (Branding) */}
       <View style={styles.header}>
-        <IconButton icon="arrow-left" iconColor="#FFF" size={28} onPress={() => navigation.goBack()} />
+        <IconButton style={{ alignSelf: 'flex-start' }} icon="arrow-left" iconColor="#FFF" size={28} onPress={() => navigation.goBack()} />
         <View style={styles.profileContainer}>
-          <Avatar.Icon size={100} icon="account" style={{ backgroundColor: '#00C2FF' }} />
+          <Avatar.Icon size={80} icon="account" style={{ backgroundColor: '#00C2FF' }} />
           <Text variant="headlineMedium" style={styles.name}>
             {user?.nome || 'Usuário'}
           </Text>
         </View>
       </View>
 
-      {/* Container Branco/Escuro Arredondado */}
       <View style={[styles.contentContainer, { backgroundColor: theme.colors.background }]}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           
-          <SettingsItem label="Editar Perfil" theme={theme} onPress={() => {}} />
-          <SettingsItem label="Alterar Senha" theme={theme} onPress={() => {}} />
+          <SettingsItem 
+            label="Editar Perfil" 
+            theme={theme} 
+            onPress={() => {
+                setNome(user?.nome || '');
+                setEmail(user?.email || '');
+                setModalProfileVisible(true);
+            }} 
+           />
+          
+          <SettingsItem 
+            label="Alterar Senha" 
+            theme={theme} 
+            onPress={() => setModalPasswordVisible(true)} 
+          />
           
           <SettingsItem 
             label="Notificação" 
             isSwitch 
             value={true} 
-            onToggle={toggleTheme} 
+            onToggle={() => {}} 
             theme={theme} 
           />
           
@@ -66,7 +130,7 @@ const SettingsScreen = ({ navigation }) => {
             theme={theme} 
           />
 
-          <SettingsItem label="Excluir Conta" theme={theme} onPress={() => {}} />
+          <SettingsItem label="Excluir Conta" theme={theme} onPress={() => Alert.alert("Aviso", "Funcionalidade em breve.")} />
 
           <Button 
             mode="contained" 
@@ -80,10 +144,90 @@ const SettingsScreen = ({ navigation }) => {
           </Button>
 
         </ScrollView>
-        
-        {/* Simulação do Menu Inferior (apenas visual aqui para manter consistência) */}
         <View style={{ height: 60 }} /> 
       </View>
+
+      {/* --- MODAL EDITAR PERFIL --- */}
+      <Modal
+        visible={modalProfileVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setModalProfileVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Editar Perfil</Text>
+                </View>
+                <View style={styles.modalBody}>
+                    <CustomInput 
+                        label="Nome" 
+                        value={nome} 
+                        onChangeText={setNome} 
+                        style={{ backgroundColor: '#F2F4F8' }}
+                    />
+                    <CustomInput 
+                        label="E-mail" 
+                        value={email} 
+                        onChangeText={setEmail} 
+                        keyboardType="email-address"
+                        style={{ backgroundColor: '#F2F4F8' }}
+                    />
+
+                    <View style={styles.modalFooter}>
+                        <Button mode="outlined" style={styles.modalBtnCancel} textColor="#666" onPress={() => setModalProfileVisible(false)}>
+                            Cancelar
+                        </Button>
+                        <Button mode="contained" loading={loading} style={styles.modalBtnSave} buttonColor="#103B66" onPress={handleSaveProfile}>
+                            Salvar
+                        </Button>
+                    </View>
+                </View>
+            </View>
+        </View>
+      </Modal>
+
+      {/* --- MODAL ALTERAR SENHA --- */}
+      <Modal
+        visible={modalPasswordVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setModalPasswordVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Alterar Senha</Text>
+                </View>
+                <View style={styles.modalBody}>
+                    <CustomInput 
+                        label="Nova Senha" 
+                        value={novaSenha} 
+                        onChangeText={setNovaSenha} 
+                        secureTextEntry
+                        style={{ backgroundColor: '#F2F4F8' }}
+                    />
+                    <CustomInput 
+                        label="Confirmar Senha" 
+                        value={confirmarSenha} 
+                        onChangeText={setConfirmarSenha} 
+                        secureTextEntry
+                        style={{ backgroundColor: '#F2F4F8' }}
+                    />
+
+                    <View style={styles.modalFooter}>
+                        <Button mode="outlined" style={styles.modalBtnCancel} textColor="#666" onPress={() => setModalPasswordVisible(false)}>
+                            Cancelar
+                        </Button>
+                        <Button mode="contained" loading={loading} style={styles.modalBtnSave} buttonColor="#103B66" onPress={handleSavePassword}>
+                            Salvar
+                        </Button>
+                    </View>
+                </View>
+            </View>
+        </View>
+      </Modal>
+
     </View>
   );
 };
@@ -93,8 +237,10 @@ const styles = StyleSheet.create({
   header: {
     height: 250,
     paddingTop: 40,
+    marginBottom: 20,
     paddingHorizontal: 10,
     alignItems: 'center',
+    flexDirection: 'column'
   },
   profileContainer: { alignItems: 'center', marginTop: 10 },
   name: { color: '#FFF', fontWeight: 'bold', marginTop: 10 },
@@ -114,7 +260,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 20,
-    borderRadius: 50, // Bordas bem arredondadas como na imagem
+    borderRadius: 50,
     marginBottom: 16,
     height: 60,
   },
@@ -123,7 +269,17 @@ const styles = StyleSheet.create({
   logoutButton: {
     borderRadius: 30,
     marginTop: 20,
-  }
+  },
+
+  // Modal Styles (Reaproveitando o estilo padrão que usamos nas outras telas)
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
+  modalContent: { backgroundColor: '#FFF', borderRadius: 20, overflow: 'hidden', elevation: 5 },
+  modalHeader: { backgroundColor: '#103B66', padding: 20, alignItems: 'center' },
+  modalTitle: { color: '#FFF', fontWeight: 'bold', fontSize: 18 },
+  modalBody: { padding: 20 },
+  modalFooter: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginTop: 10 },
+  modalBtnCancel: { flex: 1, borderColor: '#DDD', borderWidth: 1 },
+  modalBtnSave: { flex: 1 },
 });
 
 export default SettingsScreen;

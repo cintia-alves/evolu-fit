@@ -28,7 +28,14 @@ export const AuthProvider = ({ children }) => {
   const signUp = async (userData) => {
     setLoading(true);
     try {
-      await authService.register(userData);
+      const response = await authService.register(userData);
+      
+      if (response && response.usuario) {
+          console.log("Auto-login após cadastro:", response.usuario);
+          setUser(response.usuario); // Define o usuário no estado global
+      }
+
+      return response;
     } catch (error) {
       throw error;
     } finally {
@@ -40,8 +47,12 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = (updatedUser) => {
+      setUser(updatedUser);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -223,7 +223,7 @@ const DashboardScreen = ({ navigation }) => {
         <View style={styles.header}>
           <View>
             <Text variant="headlineMedium" style={{ fontWeight: 'bold', color: theme.colors.primary }}>
-              Olá, {dashboardData?.user?.name}!
+              Olá, {dashboardData?.user?.name.split(' ')[0]}!
             </Text>
           </View>
           <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
@@ -248,12 +248,14 @@ const DashboardScreen = ({ navigation }) => {
             title="Gráficos" 
             subtitle="Veja seu Progresso" 
             icon="chart-line" 
+            comingSoon={true}
             onPress={() => {}}
           />
           <QuickAccessCard 
             title="Medidas" 
             subtitle="Acompanhe suas medidas" 
             icon="ruler" 
+            comingSoon={true}
             onPress={() => {}}
           />
         </View>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, IconButton } from 'react-native-paper';
 import { useAppTheme } from '../context/ThemeContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -8,10 +8,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const BottomMenu = () => {
   const { theme } = useAppTheme();
   const navigation = useNavigation();
-  const route = useRoute(); // Pega a rota atual (ex: 'Dashboard', 'Rotinas')
-  const insets = useSafeAreaInsets(); // Pega as medidas de segurança da tela
+  const route = useRoute(); 
+  const insets = useSafeAreaInsets(); 
 
-  // Função auxiliar para definir a cor baseada na rota ativa
   const getColor = (routeName) => {
     return route.name === routeName ? theme.colors.primary : theme.colors.secondaryText;
   };
@@ -22,13 +21,11 @@ const BottomMenu = () => {
       { 
         backgroundColor: theme.colors.surface, 
         borderTopColor: theme.colors.surfaceVariant,
-        // Adiciona padding bottom dinâmico (insets.bottom) + um respiro fixo (10)
         paddingBottom: Math.max(insets.bottom, 10),
-        height: 60 + Math.max(insets.bottom, 10) // Ajusta altura total baseada no safe area
+        height: 60 + Math.max(insets.bottom, 10) 
       }
     ]}>
       
-      {/* Botão Tela Inicial */}
       <TouchableOpacity 
         style={styles.item} 
         onPress={() => navigation.navigate('Dashboard')}
@@ -42,7 +39,6 @@ const BottomMenu = () => {
         <Text style={[styles.label, { color: getColor('Dashboard') }]}>Tela inicial</Text>
       </TouchableOpacity>
       
-      {/* Botão Rotina */}
       <TouchableOpacity 
         style={styles.item} 
         onPress={() => navigation.navigate('Rotinas')}
@@ -56,15 +52,17 @@ const BottomMenu = () => {
         <Text style={[styles.label, { color: getColor('Rotinas') }]}>Rotina</Text>
       </TouchableOpacity>
 
-      {/* Botão Histórico (Inativo por enquanto, cor fixa secundária) */}
-      <TouchableOpacity style={styles.item}>
+      <TouchableOpacity 
+        style={styles.item}
+        onPress={() => navigation.navigate('History')} 
+      >
         <IconButton 
-          icon="history" 
-          iconColor={theme.colors.secondaryText} 
+          icon={route.name === 'History' ? "history" : "history"} // Pode variar o icone se quiser
+          iconColor={getColor('History')} 
           size={28} 
           style={styles.icon} 
         />
-        <Text style={[styles.label, { color: theme.colors.secondaryText }]}>Histórico</Text>
+        <Text style={[styles.label, { color: getColor('History') }]}>Histórico</Text>
       </TouchableOpacity>
     </View>
   );
@@ -76,8 +74,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     paddingTop: 10,
     borderTopWidth: 1,
-    elevation: 8, // Sombra no Android
-    shadowColor: '#000', // Sombra no iOS
+    elevation: 8,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -85,11 +83,11 @@ const styles = StyleSheet.create({
   item: { 
     alignItems: 'center', 
     justifyContent: 'center',
-    flex: 1, // Garante área de toque melhor
+    flex: 1, 
   },
   icon: {
-    margin: 0, // Remove margem padrão do IconButton para alinhar melhor
-    marginBottom: -5 // Aproxima o ícone do texto
+    margin: 0, 
+    marginBottom: -5 
   },
   label: { 
     fontSize: 12, 

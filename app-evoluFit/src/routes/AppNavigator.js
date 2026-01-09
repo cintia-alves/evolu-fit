@@ -10,6 +10,7 @@ import RotinaDetailScreen from '../screens/RotinaDetailScreen';
 import RotinasScreen from '../screens/RotinasScreen';
 import SelectExercisesScreen from '../screens/SelectExercisesScreen';
 import ExecucaoTreinoScreen from '../screens/ExecucaoTreinoScreen';
+import HistoryScreen from '../screens/HistoryScreen'; // <--- Importe aqui
 
 const Stack = createNativeStackNavigator();
 
@@ -37,6 +38,8 @@ export default function AppNavigator() {
       <Stack.Screen name="SelectExercises" component={SelectExercisesScreen} />
 
       <Stack.Screen name="ExecucaoTreino" component={ExecucaoTreinoScreen} />
+
+      <Stack.Screen name="History" component={HistoryScreen} /> 
     </Stack.Navigator>
   );
 }
