@@ -143,7 +143,7 @@ const RotinaDetailScreen = ({ navigation, route }) => {
       <View style={styles.actionsContainer}>
         {(totalRotinasUser > 1 || rotina?.ativa === 1) && (
             <View style={styles.toggleContainer}>
-                <Text style={styles.toggleLabel}>Exibir na Dashboard</Text>
+                <Text style={styles.toggleLabel}>Exibir na Tela Inicial</Text>
                 <Switch value={rotina?.ativa === 1} onValueChange={handleToggleActive} color="#00C2FF"/>
             </View>
         )}
