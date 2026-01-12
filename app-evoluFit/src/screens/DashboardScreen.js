@@ -52,8 +52,6 @@ const DashboardScreen = ({ navigation }) => {
                   // Se for 404 ou mensagem de "nenhum treino", é descanso
                   if (error.message?.includes('Nenhum treino') || error.message?.includes('404')) {
                       treinoDoDia = null;
-                  } else {
-                      console.error("Erro ao carregar treino do dia:", error);
                   }
               }
 
@@ -119,7 +117,7 @@ const DashboardScreen = ({ navigation }) => {
 
   // --- COMPONENTE: Card quando TEM rotina (Novo Design) ---
   const ActiveRoutineCard = () => {
-      const isConcluido = treinoHoje.concluido === 1;
+      const isConcluido = treinoHoje?.concluido === 1;
 
       if (!treinoHoje) {
           return (

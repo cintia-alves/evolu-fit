@@ -25,13 +25,8 @@ async function handleTreinos(req, res) {
             `).get(rotinaId, dia);
             
             if (!treino) {
-                return json(res, { 
-                    erro: `Nenhum treino para ${DIAS_SEMANA[dia]}`,
-                    dia_semana: dia,
-                    dia_nome: DIAS_SEMANA[dia]
-                }, 404);
+                 return json(res, null);
             }
-
             // 2. Buscar Nome da Rotina
             const rotina = db.prepare('SELECT nome FROM rotina WHERE id = ?').get(rotinaId);
             

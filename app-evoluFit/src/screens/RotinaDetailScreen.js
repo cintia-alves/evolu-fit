@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native';
 import { Text, IconButton, Button, Avatar, Switch, TextInput as RNTextInput } from 'react-native-paper';
-import { useFocusEffect } from '@react-navigation/native'; // Importante
+import { useFocusEffect } from '@react-navigation/native';
 import { useAppTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { rotinaService } from '../services/rotinaService';
@@ -31,7 +31,6 @@ const RotinaDetailScreen = ({ navigation, route }) => {
   const weekLetters = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
   const fullDays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
-  // Carregar dados (usar useFocusEffect para recarregar ao voltar da seleção de exercicios)
   const loadData = async () => {
     if(!rotina?.id) return;
     setLoading(true);
@@ -66,7 +65,6 @@ const RotinaDetailScreen = ({ navigation, route }) => {
     }
   };
 
-  // --- CRUD Rotina Nome ---
   const handleUpdateRotinaName = async () => {
       if (!tempRotinaName.trim()) return;
       try {
@@ -76,7 +74,6 @@ const RotinaDetailScreen = ({ navigation, route }) => {
       } catch (error) { Alert.alert("Erro", "Falha ao atualizar."); }
   };
 
-  // --- CRUD Treino (Dia) ---
   const openModal = (treino = null) => {
     if (treino) {
         setEditingTreino(treino);
@@ -113,10 +110,7 @@ const RotinaDetailScreen = ({ navigation, route }) => {
     ]);
   };
 
-  // --- Navegação para Seleção de Exercícios ---
-const handleEditExercises = (treino) => {
-    // Agora o backend retorna 'exercicios' (lista de objetos), não apenas IDs.
-    // Passamos essa lista completa para a tela de seleção, assim os Chips já terão nomes.
+  const handleEditExercises = (treino) => {
     const currentSelected = treino.exercicios || []; 
     
     navigation.navigate('SelectExercises', { 
@@ -125,14 +119,13 @@ const handleEditExercises = (treino) => {
             try {
                 const ids = selectedExercisesList.map(e => e.id);
                 await treinoService.updateExercises(treino.id, ids);
-                // Recarrega os dados imediatamente para atualizar as badges e contadores
                 loadData();
             } catch (e) {
                 Alert.alert("Erro", "Falha ao salvar exercícios");
             }
         }
     });
-};
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: '#103B66' }]}>
@@ -174,7 +167,6 @@ const handleEditExercises = (treino) => {
                                 <View style={styles.dayTag}>
                                     <Text style={styles.dayTagText}>{fullDays[item.dia_semana]}</Text>
                                 </View>
-                                {/* Exibe os grupos musculares REAIS vindos do backend */}
                                 {item.grupos && item.grupos.map((grupo, idx) => (
                                     <View key={idx} style={[styles.dayTag, { backgroundColor: '#87CEFA', marginLeft: 5 }]}>
                                         <Text style={styles.dayTagText}>{grupo}</Text>
@@ -189,7 +181,6 @@ const handleEditExercises = (treino) => {
                     </View>
 
                     <TouchableOpacity style={styles.cardFooter} onPress={() => handleEditExercises(item)}>
-                        {/* Exibe contagem REAL */}
                         <Text style={styles.exercisesText}>
                             {item.total_exercicios > 0 ? `${item.total_exercicios} Exercícios` : 'Adicionar Exercícios'}
                         </Text>
@@ -201,13 +192,9 @@ const handleEditExercises = (treino) => {
             {treinos && treinos.length === 0 && !loading && (
                 <Text style={{ textAlign: 'center', color: '#999', marginTop: 20 }}>Nenhum dia de treino cadastrado.</Text>
             )}
+            
+            {/* Botão "Salvar e Voltar" removido daqui */}
         </ScrollView>
-
-        <View style={styles.footerButtons}>
-            <Button mode="contained" buttonColor="#103B66" style={{ borderRadius: 20, width: '100%' }} onPress={() => navigation.goBack()}>
-                Salvar e Voltar
-            </Button>
-        </View>
       </View>
       
       {/* Modal Criar/Editar Treino */}
@@ -241,7 +228,7 @@ const handleEditExercises = (treino) => {
         <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
                 <View style={styles.modalHeader}>
-                     <Text style={styles.modalTitle}>Editar Rotina</Text>
+                      <Text style={styles.modalTitle}>Editar Rotina</Text>
                 </View>
                 <View style={styles.modalBody}>
                     <CustomInput label="Nome da Rotina" value={tempRotinaName} onChangeText={setTempRotinaName} style={{ backgroundColor: '#F2F4F8' }} />
@@ -270,9 +257,8 @@ const styles = StyleSheet.create({
   toggleContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.2)', paddingHorizontal: 15, paddingVertical: 5, borderRadius: 20 },
   toggleLabel: { color: '#FFF', marginRight: 10, fontSize: 12 },
   contentContainer: { flex: 1, borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 24 },
-  listTitle: { color: '#103B66', fontWeight: 'bold', marginBottom: 10, marginTop: 5 },
   
-  // Card Novo
+  // Card Styles
   treinoCard: { borderRadius: 20, overflow: 'hidden', marginBottom: 15, elevation: 3, backgroundColor: '#FFF' },
   cardHeader: { backgroundColor: '#103B66', padding: 15, flexDirection: 'row', alignItems: 'flex-start' },
   dateIcon: { backgroundColor: '#87CEFA', borderRadius: 12, width: 50, height: 50, justifyContent: 'center', alignItems: 'center' },
@@ -282,7 +268,8 @@ const styles = StyleSheet.create({
   cardFooter: { backgroundColor: '#F5F6FA', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   exercisesText: { color: '#103B66', fontWeight: 'bold', fontSize: 16, marginRight: 10 },
 
-  footerButtons: { marginTop: 20 },
+  // footerButtons removido
+  
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
   modalContent: { backgroundColor: '#FFF', borderRadius: 20, overflow: 'hidden', elevation: 5 },
   modalHeader: { backgroundColor: '#587ba8', padding: 20, alignItems: 'center' },
