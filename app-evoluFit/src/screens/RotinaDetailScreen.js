@@ -192,9 +192,22 @@ const RotinaDetailScreen = ({ navigation, route }) => {
             {treinos && treinos.length === 0 && !loading && (
                 <Text style={{ textAlign: 'center', color: '#999', marginTop: 20 }}>Nenhum dia de treino cadastrado.</Text>
             )}
-            
-            {/* Botão "Salvar e Voltar" removido daqui */}
         </ScrollView>
+        
+        <Button 
+            mode="contained" 
+            style={styles.btnSaveBack} 
+            buttonColor="#103B66" 
+            textColor="#FFF"
+            onPress={() => {
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'Dashboard' }],
+                });
+            }}
+        >
+            Salvar e Voltar
+        </Button>
       </View>
       
       {/* Modal Criar/Editar Treino */}
@@ -267,6 +280,7 @@ const styles = StyleSheet.create({
   dayTagText: { color: '#FFF', fontSize: 12 },
   cardFooter: { backgroundColor: '#F5F6FA', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   exercisesText: { color: '#103B66', fontWeight: 'bold', fontSize: 16, marginRight: 10 },
+  btnSaveBack: { borderRadius: 25, marginBottom: 10 },
 
   // footerButtons removido
   

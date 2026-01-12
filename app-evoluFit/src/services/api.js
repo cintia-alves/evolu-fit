@@ -1,4 +1,4 @@
-const API_URL = 'http://192.168.0.8:3000/api'; 
+const API_URL = 'http://192.168.0.4:3000/api'; 
 
 export const api = {
   post: async (endpoint, body) => {
